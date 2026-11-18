@@ -7,8 +7,9 @@
 		"types": ["node"],
 		"strict": true,
 		"noEmit": true,
+		"allowImportingTsExtensions": true,
 		"skipLibCheck": true,
 		"forceConsistentCasingInFileNames": true
 	},
-	"include": ["codex-multi.ts"]
+	"include": ["*.ts", "test/**/*.ts"]
 }

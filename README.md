@@ -20,7 +20,8 @@ pi supports one login per provider id. This extension clones the built-in
 pi install npm:@andre-barbosa/pi-codex-multi
 ```
 
-Restart pi or run `/reload` to load the extension. Requires Node.js 22.19 or newer.
+Restart pi or run `/reload` to load the extension. Requires Pi 1.5.2 or newer
+and Node.js 22.19 or newer.
 
 If you previously loaded `codex-multi.ts` directly, remove that entry from
 `~/.pi/agent/settings.json` (or the copy/symlink in `~/.pi/agent/extensions/`)
@@ -92,8 +93,21 @@ Accounts persist in `~/.pi/agent/codex-accounts.json`:
   lifecycle, and `/login` menu entry.
 - The extension builds each clone from pi's own `builtinProviders()`
   (`@earendil-works/pi-ai/providers/all`) — same base URL, streaming API
-  (`openai-codex-responses`), OAuth flow, and model catalog as the built-in
-  provider. Models are restamped with the clone's provider id and relabeled.
+  (`openai-codex-responses`), OAuth flow, and baseline model catalog as the
+  built-in provider. Models are restamped with the clone's provider id and
+  relabeled.
+- Each clone implements Pi's native `Provider.refreshModels` contract. Pi's
+  normal startup/model-picker refreshes overlay the public `openai-codex`
+  catalog from pi.dev, with four-hour freshness checks, ETag revalidation,
+  and generation-checked persistence in `~/.pi/agent/models-store.json`.
+  Cached catalogs work offline; newer bundled metadata takes precedence over
+  older cached catalogs. Failed requests leave last-known models available.
+- Catalog requests are public and never send account credentials or rotate
+  OAuth tokens. Pi still requires the account to be configured before doing
+  network discovery. Cancellation and `PI_OFFLINE` follow Pi's normal refresh
+  lifecycle; the extension runs no polling timers.
+- `catalog.ts` mirrors Pi's catalog-overlay policy through the public provider
+  API because Pi's own `withRemoteCatalog` helper is not publicly exported.
 - Login runs the standard ChatGPT OAuth flow (browser on
   `localhost:1455/auth/callback`, or device code for headless machines).
 
@@ -114,7 +128,8 @@ Accounts persist in `~/.pi/agent/codex-accounts.json`:
   refresh completes around the same moment, the deleted entry can reappear
   as an unused orphan — `/logout codex-<id>` removes it (works even though
   the provider is unregistered). Prefer removing accounts while pi is idle.
-- The model catalog mirrors pi's built-in Codex catalog for your pi version.
+- New catalog models appear in `/model` automatically after a normal refresh;
+  your `/scoped-models` selection and default model do not change automatically.
 - Multiple accounts are subject to each subscription's own limits; this is
   per-account parallelism, not unlimited usage. Use in line with OpenAI's
   terms.
@@ -126,6 +141,8 @@ Accounts persist in `~/.pi/agent/codex-accounts.json`:
   by pi's extension loader; no `npm install` is required to *run* it.
 - `npm install` installs development dependencies for editor type hints and
   `npm run typecheck`. Pi supplies the runtime peer dependencies.
+- Run `npm test` for catalog refresh, offline/cache, cancellation, ETag,
+  account isolation, and native Pi Models lifecycle regression tests.
 - Gotcha discovered while building this: models returned by a custom
   `Provider.getModels()` must carry the clone's `provider` id — the builtin
   catalog is stamped `openai-codex`, and unstamped models silently vanish from
@@ -135,15 +152,15 @@ Accounts persist in `~/.pi/agent/codex-accounts.json`:
 
 ```bash
 npm ci
-npm publish --dry-run  # runs the typecheck and previews the published files
+npm publish --dry-run  # runs the typecheck/tests and previews the published files
 npm login             # sign in as a user with access to @andre-barbosa
 npm publish
 ```
 
 The package is published publicly as `@andre-barbosa/pi-codex-multi`; no build
-step is required. Only `codex-multi.ts`, `package.json`, `README.md`, and
-`LICENSE` are shipped. For subsequent releases, bump the version with
-`npm version patch` before publishing (npm versions cannot be reused).
+step is required. Only `codex-multi.ts`, `catalog.ts`, `package.json`, `README.md`,
+`CHANGELOG.md`, and `LICENSE` are shipped. For subsequent releases, bump the
+version with `npm version patch` before publishing (npm versions cannot be reused).
 
 ## License
 

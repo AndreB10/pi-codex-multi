@@ -1,6 +1,6 @@
 {
 	"name": "@andre-barbosa/pi-codex-multi",
-	"version": "1.0.0",
+	"version": "1.1.0",
 	"description": "pi extension: multiple ChatGPT (OpenAI Codex) subscriptions side by side",
 	"author": "Andre Barbosa",
 	"license": "MIT",
@@ -26,7 +26,9 @@
 	},
 	"files": [
 		"codex-multi.ts",
+		"catalog.ts",
 		"README.md",
+		"CHANGELOG.md",
 		"LICENSE"
 	],
 	"engines": {
@@ -39,15 +41,16 @@
 	},
 	"scripts": {
 		"typecheck": "tsc --noEmit",
-		"prepublishOnly": "npm run typecheck"
+		"test": "node --test test/*.test.ts",
+		"prepublishOnly": "npm run typecheck && npm test"
 	},
 	"peerDependencies": {
 		"@earendil-works/pi-ai": "*",
 		"@earendil-works/pi-coding-agent": "*"
 	},
 	"devDependencies": {
-		"@earendil-works/pi-ai": "0.84.3",
-		"@earendil-works/pi-coding-agent": "0.84.3",
+		"@earendil-works/pi-ai": "1.5.2",
+		"@earendil-works/pi-coding-agent": "1.5.2",
 		"@types/node": "^24.0.0",
 		"typescript": "^5.9.3"
 	}

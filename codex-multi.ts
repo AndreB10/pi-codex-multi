@@ -22,7 +22,8 @@
  *   /codex use <id>           switch the active model to this account
  */
 
-import { builtinProviders } from "@earendil-works/pi-ai/providers/all";
+import { builtinProviders, getBuiltinModelDataGeneratedAt } from "@earendil-works/pi-ai/providers/all";
+import { withCodexCatalog } from "./catalog.ts";
 import type { Model, Provider } from "@earendil-works/pi-ai";
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import fs from "node:fs";
@@ -246,26 +247,24 @@ function buildAccountProvider(account: AccountConfig): Provider {
 	const label = account.name || account.id;
 	const pid = providerIdFor(account);
 
-	// Clone the catalog, restamping `provider` (models from the builtin catalog
-	// are stamped "openai-codex") and renaming so accounts are distinguishable
-	// in /model.
+	// Keep an account-stamped baseline. The catalog wrapper adds live updates
+	// and display labels without persisting account names into model metadata.
 	const models: Model<any>[] = base.getModels().map((m) => ({
 		...m,
 		provider: pid,
-		name: `${m.name} · ${label}`,
 	}));
 
 	// Give the OAuth entry a distinct label in /login while reusing the exact
 	// same battle-tested login/refresh flow as the built-in provider.
 	const oauth = base.auth.oauth ? { ...base.auth.oauth, name: `OpenAI Codex (${label})` } : undefined;
 
-	return {
+	return withCodexCatalog({
 		...base,
 		id: pid,
 		name: `OpenAI Codex (${label})`,
 		auth: oauth ? { oauth } : base.auth,
 		getModels: () => models,
-	};
+	}, label, getBuiltinModelDataGeneratedAt());
 }
 
 // ----------------------------------------------------------- auth reporting
